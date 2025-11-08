@@ -15,26 +15,32 @@ actions:
       evaluate_payload: false
       qos: 0
       retain: false
-      payload: |
-        [
-          { "text": "{{ states.sensor.aqara_temp_eg_temperature.state | float |
-          round(1) }}°C",
-              "rainbow": false,
-              "icon": "70122",
-              "duration": 10,
-              "pushIcon": 0,
-              "lifetime": 2000,
-              "repeat": 6
-          },
-          { "text": "{{ states.sensor.aqara_temp_eg_humidity.state | float |
-          round(1) }}%",
-              "rainbow": false,
-              "icon": "71006",
-              "duration": 10,
-              "pushIcon": 0,
-              "lifetime": 2000,
-              "repeat": 6
-          }
-        ]
+      payload: |-
+        {% set icon_map = {
+          '°C': '70122',
+          '%': '71006'
+        } %}
+
+        {% set sensor_mapping = {
+          'sensor.aqara_temp_eg_temperature': '°C',
+          'sensor.aqara_temp_eg_humidity': '%',
+        } %}
+
+        {%- set ns = namespace(notifications=[]) -%}
+        {%- for sensor, unit in sensor_mapping.items() -%}
+          {%- set text = states(sensor) | float | round(1) ~ unit -%}
+          {%- set icon = icon_map.get(unit, '70122') %}
+          {%- set notification = {
+            "text": text,
+            "rainbow": false,
+            "icon": icon,
+            "duration": 10,
+            "pushIcon": 0,
+            "lifetime": 2000,
+            "repeat": 6
+          } -%}
+          {%- set ns.notifications = ns.notifications + [notification] -%}
+        {%- endfor -%}
+        {{ ns.notifications | to_json }}
       topic: awtrix_b3d1fc/custom/wetterdateneg
 mode: single
