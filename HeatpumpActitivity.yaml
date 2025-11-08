@@ -1,0 +1,61 @@
+alias: Awtrix Heat Pump Activity
+description: ""
+triggers:
+  - trigger: time_pattern
+    minutes: /5
+conditions:
+  - condition: not
+    conditions:
+      - condition: state
+        entity_id: sensor.boiler_compressor_activity
+        state: "off"
+  - condition: state
+    entity_id: switch.ikea_steckdose_awtrix_wohnzimmer
+    state:
+      - "on"
+actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      payload: >-
+        {% set icon_map = {
+          'heating': '71108',
+          'hot water': '71110'
+        } %}
+
+
+        {% set sensor_mapping = {
+          'sensor.boiler_compressor_current_power': 'W',
+          'sensor.boiler_burner_current_power': '%',
+        } %}
+
+
+        {%- set icon = icon_map.get(states('sensor.boiler_compressor_activity'),
+        '67113') %}
+
+        {%- set ns = namespace(notifications=[]) -%}
+
+        {%- for sensor, unit in sensor_mapping.items() -%}
+          {%- if unit == 'W' -%}
+            {%- set text = ('%.1fkW' | format(states(sensor) | float/1000 )) -%}
+          {%- else -%}
+            {%- set text = states(sensor) ~ unit -%}
+          {%- endif -%}
+          {%- set notification = {
+            "text": text,
+            "rainbow": false,
+            "icon": icon,
+            "duration": 10,
+            "pushIcon": 0,
+            "lifetime": 400,
+            "repeat": 6
+          } -%}
+          {%- set ns.notifications = ns.notifications + [notification] -%}
+        {%- endfor -%}
+
+        {{ ns.notifications | to_json }}
+      topic: awtrix_b3d1fc/custom/heatpumpactivity
+mode: single
