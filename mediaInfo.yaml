@@ -1,0 +1,39 @@
+alias: Awtrix Sonos Titel
+description: Awtrix Sonos Titel
+triggers:
+  - trigger: state
+    entity_id:
+      - media_player.wohnzimmer
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 10
+    attribute: media_title
+conditions:
+  - condition: template
+    value_template: "{{ state_attr('media_player.wohnzimmer', 'media_title') != none}}"
+    alias: Wenn Wohnzimmer Media Titel != none
+  - condition: state
+    entity_id: switch.ikea_steckdose_awtrix_wohnzimmer
+    state:
+      - "on"
+actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      payload: >
+        { "text": "{{ state_attr('media_player.wohnzimmer', 'media_title') ~ ' -
+        ' ~  state_attr('media_player.wohnzimmer', 'media_artist') }}", 
+          "icon": "22046",
+          "rainbow": false,
+          "duration": 20,
+          "pushIcon": 0,
+          "lifetime": 180,
+          "scrollSpeed": 70,
+          "repeat": 6
+        }
+      topic: awtrix_b3d1fc/custom/sonossongtitel
+mode: single
