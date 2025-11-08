@@ -1,0 +1,40 @@
+alias: Awtrix Wetterdaten EG
+description: Awtrix Wetterdaten EG
+triggers:
+  - trigger: time_pattern
+    minutes: /5
+conditions:
+  - condition: state
+    entity_id: switch.ikea_steckdose_awtrix_wohnzimmer
+    state:
+      - "on"
+actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      payload: |
+        [
+          { "text": "{{ states.sensor.aqara_temp_eg_temperature.state | float |
+          round(1) }}°C",
+              "rainbow": false,
+              "icon": "70122",
+              "duration": 10,
+              "pushIcon": 0,
+              "lifetime": 2000,
+              "repeat": 6
+          },
+          { "text": "{{ states.sensor.aqara_temp_eg_humidity.state | float |
+          round(1) }}%",
+              "rainbow": false,
+              "icon": "71006",
+              "duration": 10,
+              "pushIcon": 0,
+              "lifetime": 2000,
+              "repeat": 6
+          }
+        ]
+      topic: awtrix_b3d1fc/custom/wetterdateneg
+mode: single
