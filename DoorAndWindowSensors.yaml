@@ -1,0 +1,92 @@
+alias: Awtrix offene Tuer und Fenster
+description: Awtrix Message
+triggers:
+  - trigger: time_pattern
+    minutes: /5
+conditions:
+  - condition: state
+    entity_id: switch.ikea_steckdose_awtrix_wohnzimmer
+    state:
+      - "on"
+  - condition: or
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.ikea_parasoll_schlafzimmer_contact
+        state:
+          - "on"
+        for:
+          hours: 0
+          minutes: 10
+          seconds: 0
+      - condition: state
+        entity_id: binary_sensor.ikea_parasoll_keller_contact
+        state:
+          - "on"
+        for:
+          hours: 0
+          minutes: 10
+          seconds: 0
+      - condition: state
+        entity_id: binary_sensor.ikea_parasoll_werkstatt_contact
+        state:
+          - "on"
+        for:
+          hours: 0
+          minutes: 10
+          seconds: 0
+      - condition: state
+        entity_id: binary_sensor.ikea_parasoll_keller_contact
+        state:
+          - "on"
+        for:
+          hours: 0
+          minutes: 10
+          seconds: 0
+actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      payload: |-
+        {% set sensor_mapping = {
+          'binary_sensor.ikea_parasoll_schlafzimmer_contact': 'Schlafzimmerfenster',
+          'binary_sensor.ikea_parasoll_keller_contact': 'Kellerfenster',
+          'binary_sensor.ikea_parasoll_kellertur_contact': 'Kellertür',
+          'binary_sensor.ikea_parasoll_werkstatt_contact': 'Werkstattfenster'
+        } %}
+        {%- set ns = namespace(notifications=[]) -%}
+        {%- for sensor, name in sensor_mapping.items() -%}
+          {%- if is_state(sensor, 'on') -%}
+            {%- set notification = {
+              "text": name ~ ' ist offen!',
+              "icon": "135",
+              "rainbow": false,
+              "duration": 10,
+              "pushIcon": 0,
+              "lifetime": 600,
+              "repeat": 6
+            } -%}
+            {%- set ns.notifications = ns.notifications + [notification] -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {{ ns.notifications | to_json }}
+      topic: awtrix_b3d1fc/custom/tuerundfenstersensoren
+  - action: persistent_notification.create
+    metadata: {}
+    data:
+      notification_id: "12344321"
+      message: |
+        {% set sensor_mapping = {
+          'binary_sensor.ikea_parasoll_schlafzimmer_contact': 'Schlafzimmerfenster',
+          'binary_sensor.ikea_parasoll_keller_contact': 'Kellerfenster',
+          'binary_sensor.ikea_parasoll_kellertur_contact': 'Kellertür',
+          'binary_sensor.ikea_parasoll_werkstatt_contact': 'Werkstattfenster'
+        } %}
+        {%- for sensor, name in sensor_mapping.items() -%}
+          {%- if is_state(sensor, 'on') -%}
+              {{ name ~ ' ist geöffnet!' }}
+          {%- endif -%}
+        {%- endfor -%}
+mode: single
