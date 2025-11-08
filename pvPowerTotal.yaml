@@ -1,0 +1,37 @@
+alias: Awtrix PV Power Total
+description: ""
+triggers:
+  - trigger: time_pattern
+    minutes: /5
+conditions:
+  - condition: sun
+    before: sunset
+    after: sunrise
+  - condition: state
+    entity_id: switch.ikea_steckdose_awtrix_wohnzimmer
+    state:
+      - "on"
+actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      payload: |
+        {% if states('sensor.pv_leistungpv_total_kw')|float > 0 %}
+          { "text": "{{ states.sensor.pv_leistungpv_total_kw.state | float |
+        round(2) }}", 
+            "icon": "37515",
+        {% else %}
+          { "text": "No PV",
+            "icon": "64949",
+        {% endif %}
+            "rainbow": false,
+            "duration": 10,
+            "pushIcon": 0,
+            "lifetime": 600,
+            "repeat": 6
+        }
+      topic: awtrix_b3d1fc/custom/pvpowertotal
+mode: single
