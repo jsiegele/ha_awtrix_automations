@@ -1,0 +1,33 @@
+alias: Awtrix Message
+description: Awtrix Message
+triggers:
+  - trigger: state
+    entity_id:
+      - input_text.awtrix_message
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 20
+conditions:
+  - condition: state
+    entity_id: switch.ikea_steckdose_awtrix_wohnzimmer
+    state:
+      - "on"
+actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      payload: |
+        { "text": "{{ states.input_text.awtrix_message.state }}", 
+          "icon": "42954",
+          "rainbow": false,
+          "duration": 10,
+          "pushIcon": 0,
+          "lifetime": 600,
+          "repeat": 6
+        }
+      topic: awtrix_b3d1fc/custom/custommessage
+mode: single
