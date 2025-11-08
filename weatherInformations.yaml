@@ -1,0 +1,37 @@
+description: Awtrix Wetterdaten Aussen
+triggers:
+  - trigger: time_pattern
+    minutes: /5
+conditions:
+  - condition: state
+    entity_id: switch.ikea_steckdose_awtrix_wohnzimmer
+    state:
+      - "on"
+actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      payload: |
+        { "text": "{{ states.sensor.boiler_outside_temperature.state }}°C",
+            "rainbow": false,
+            {% set icon_map = {
+              'cloudy': '2283',
+              'partlycloudy': '2286',
+              'rainy': '2284',
+              'sunny': '2282',
+              'snowy': '2289',
+              'lightning': '52171',
+              'clear-night': '13345',
+              'partlycloudy-night': '58532'
+            } %}
+            "icon": "{{ icon_map.get(states('weather.innsbruck_fl'), '52070') }}",
+            "duration": 10,
+            "pushIcon": 0,
+            "lifetime": 2000,
+            "repeat": 6
+        }
+      topic: awtrix_b3d1fc/custom/wetterdatenaussen
+mode: single
