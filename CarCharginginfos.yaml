@@ -1,0 +1,47 @@
+alias: Awtrix Auto Charginginfos
+description: ""
+triggers:
+  - trigger: time_pattern
+    minutes: /5
+conditions:
+  - condition: state
+    entity_id: switch.ikea_steckdose_awtrix_wohnzimmer
+    state:
+      - "on"
+  - condition: template
+    value_template: |
+      {{ states.sensor.charger_status_connector.state != "Available" }}
+    alias: Wenn der Charger Status ungleich Available ist
+    enabled: true
+actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      payload: |
+        [
+          {% set state = states('sensor.charger_status_connector') %}
+          {% set icon = '59852' if state == "Charging" else '59663' %}
+          {
+            "text": "{{ states('sensor.audi_q4_e_tron_primary_engine_percent') ~ '%' }}",
+            "icon": "{{ icon }}",
+            "rainbow": false,
+            "duration": 10,
+            "pushIcon": 0,
+            "lifetime": 600,
+            "repeat": 6
+          },
+          {
+            "text": "{{ states.sensor.charger_power_active_import.state | float | round(1) ~ 'kWh' }}",
+            "icon": "{{ icon }}",
+            "rainbow": false,
+            "duration": 10,
+            "pushIcon": 0,
+            "lifetime": 600,
+            "repeat": 6
+          }
+        ]
+      topic: awtrix_b3d1fc/custom/carchargerinfos
+mode: single
