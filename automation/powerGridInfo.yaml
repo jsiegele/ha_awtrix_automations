@@ -1,0 +1,50 @@
+alias: Awtrix Power Grid Info
+description: ""
+triggers:
+  - trigger: time_pattern
+    minutes: /5
+conditions:
+  - condition: numeric_state
+    entity_id: sensor.pv_leistungpv_total_kw
+    above: 0.1
+  - condition: state
+    entity_id: switch.ikea_steckdose_awtrix_wohnzimmer
+    state:
+      - "on"
+actions:
+  - action: mqtt.publish
+    metadata: {}
+    data:
+      evaluate_payload: false
+      qos: 0
+      retain: false
+      payload: |-
+        {% set sensor_mapping = {
+          'sensor.solarnet_power_grid_export': 'No feed-in',
+          'sensor.solarnet_power_grid_import': 'No import',
+        } %}
+
+        {% set icon_mapping = {
+          'sensor.solarnet_power_grid_export': '71134',
+          'sensor.solarnet_power_grid_import': '71135'
+        } %} 
+
+        {%- set ns = namespace(notifications=[]) -%}
+        {%- for sensor, altertext in sensor_mapping.items() -%}
+          {% set power = states(sensor)|float  %}
+          {% set icon = icon_mapping.get(sensor)  if power >= 0.01 else ('71136') %}
+          {% set text = ('%.1fkW' | format(power / 1000)) if power >= 0.01 else altertext%}
+          {%- set notification = {
+            "text": text,
+            "rainbow": false,
+            "icon": icon,
+            "duration": 10,
+            "pushIcon": 0,
+            "lifetime": 400,
+            "repeat": 6
+          } -%}
+          {%- set ns.notifications = ns.notifications + [notification] -%}
+        {%- endfor -%}
+        {{ ns.notifications | to_json }}
+      topic: awtrix_b3d1fc/custom/powergridinfo
+mode: single
