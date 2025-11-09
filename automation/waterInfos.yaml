@@ -28,5 +28,5 @@ actions:
             "lifetime": 400,
             "repeat": 6
         }
-      topic: awtrix_b3d1fc/custom/powerconsumed
+      topic: awtrix_b3d1fc/custom/wasterinfos
 mode: single
