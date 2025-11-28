@@ -25,15 +25,14 @@ actions:
         {% set icon = '59852' if state == "Charging" else '59663' %}
 
         {% set sensor_mapping = {
-          'sensor.charger_power_active_import': 'W',
+          'sensor.charger_power_active_import': 'kW',
           'sensor.audi_q4_e_tron_primary_engine_percent': '%',
         } %}
 
         {%- set ns = namespace(notifications=[]) -%}
         {%- for sensor, unit in sensor_mapping.items() -%}
-          {%- set text = states(sensor) | float | round(1) ~ unit -%}
-          {%- if unit == 'W' -%}
-            {%- set text = ('%.1fkW' | format(states(sensor) | float/1000 )) -%}
+          {%- if unit == 'kW' -%}
+            {%- set text = ('%.1fkW' | format(states(sensor) | float )) -%}
           {%- else -%}
             {%- set text = states(sensor) ~ unit -%}
           {%- endif -%}
